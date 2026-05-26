@@ -1,0 +1,180 @@
+<div class="animate-fade-in">
+  <!-- Header -->
+  <div class="page-header">
+    <div>
+      <h1 class="page-title">
+        <i class="bi bi-grid-3x3-gap-fill" style="color:#4f46e5"></i> Parking Slots
+      </h1>
+      <p class="page-subtitle">{{ slots().length }} slots total</p>
+    </div>
+    <button (click)="openAdd()" class="btn-primary-tw">
+      <i class="bi bi-plus-lg"></i> Add Slot
+    </button>
+  </div>
+
+  <!-- Alerts -->
+  @if (success()) {
+    <div class="alert alert-success animate-fade-in">
+      <i class="bi bi-check-circle-fill"></i> {{ success() }}
+      <button (click)="success.set('')" class="alert-close"><i class="bi bi-x-lg"></i></button>
+    </div>
+  }
+  @if (error()) {
+    <div class="alert alert-error animate-fade-in">
+      <i class="bi bi-exclamation-circle-fill"></i> {{ error() }}
+      <button (click)="error.set('')" class="alert-close"><i class="bi bi-x-lg"></i></button>
+    </div>
+  }
+
+  <!-- Summary Cards -->
+  <div class="slots-stats-grid">
+    <div class="card-tw slots-stat animate-slide-up">
+      <div class="slots-stat-value">{{ stats.total }}</div>
+      <div class="slots-stat-label">Total</div>
+    </div>
+    <div class="card-tw slots-stat border-emerald animate-slide-up delay-75">
+      <div class="slots-stat-value stat-emerald">{{ stats.available }}</div>
+      <div class="slots-stat-label">Available</div>
+    </div>
+    <div class="card-tw slots-stat border-amber animate-slide-up delay-100">
+      <div class="slots-stat-value stat-amber">{{ stats.reserved }}</div>
+      <div class="slots-stat-label">Reserved</div>
+    </div>
+    <div class="card-tw slots-stat border-red animate-slide-up delay-150">
+      <div class="slots-stat-value stat-red">{{ stats.occupied }}</div>
+      <div class="slots-stat-label">Occupied</div>
+    </div>
+    <div class="card-tw slots-stat border-sky animate-slide-up delay-200">
+      <div class="slots-stat-value stat-sky">{{ stats.twoW }}</div>
+      <div class="slots-stat-label">2-Wheeler</div>
+    </div>
+    <div class="card-tw slots-stat border-indigo animate-slide-up delay-300">
+      <div class="slots-stat-value stat-indigo">{{ stats.fourW }}</div>
+      <div class="slots-stat-label">4-Wheeler</div>
+    </div>
+  </div>
+
+  <!-- Filters -->
+  <div class="filter-bar">
+    <div class="filter-row">
+      <select class="input-tw slots-filter-sel" [(ngModel)]="filterType" (change)="applyFilter()">
+        <option value="">All Types</option>
+        <option value="2W">2-Wheeler</option>
+        <option value="4W">4-Wheeler</option>
+      </select>
+      <select class="input-tw slots-filter-sel" [(ngModel)]="filterStatus" (change)="applyFilter()">
+        <option value="">All Statuses</option>
+        <option value="-1">Available</option>
+        <option value="0">Reserved</option>
+        <option value="1">Occupied</option>
+      </select>
+      <button (click)="filterType=''; filterStatus=''; load()" class="clear-btn">
+        <i class="bi bi-x-circle"></i> Clear
+      </button>
+    </div>
+  </div>
+
+  <!-- Table -->
+  <div class="table-card">
+    @if (loading()) {
+      <div class="spinner-container">
+        <svg class="animate-spin slots-spinner" fill="none" viewBox="0 0 24 24">
+          <circle class="spinner-track" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+          <path class="spinner-fill" fill="currentColor" d="M4 12a8 8 0 018-8v8z"></path>
+        </svg>
+      </div>
+    } @else if (slots().length === 0) {
+      <div class="empty-state">
+        <i class="bi bi-grid-3x3-gap empty-state-icon"></i>
+        <p class="empty-state-title">No slots found</p>
+      </div>
+    } @else {
+      <div class="table-scroll">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>Slot ID</th>
+              <th>Type</th>
+              <th>Floor</th>
+              <th>Status</th>
+              <th class="col-right">Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (s of slots(); track s.id) {
+              <tr>
+                <td class="td-primary">{{ s.id }}</td>
+                <td>
+                  @if (s.type === '2W') {
+                    <span class="badge-2w"><i class="bi bi-bicycle"></i> 2W</span>
+                  } @else {
+                    <span class="badge-4w"><i class="bi bi-car-front"></i> 4W</span>
+                  }
+                </td>
+                <td>
+                  <span class="slot-chip">{{ s.location }}-{{ s.id }}</span>
+                </td>
+                <td>
+                  @if (s.occupiedStatus === -1) { <span class="badge-active">Available</span> }
+                  @else if (s.occupiedStatus === 0) { <span class="badge-reserved">Reserved</span> }
+                  @else { <span class="badge-occupied">Occupied</span> }
+                </td>
+                <td class="td-actions">
+                  <button (click)="openEdit(s)" class="action-btn-edit"><i class="bi bi-pencil"></i></button>
+                  <button (click)="delete(s)"   class="action-btn-delete"><i class="bi bi-trash"></i></button>
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    }
+  </div>
+</div>
+
+<!-- Modal -->
+@if (showModal()) {
+  <div class="modal-overlay" (click)="showModal.set(false)"></div>
+  <div class="modal-wrapper">
+    <div class="modal-box modal-box--sm animate-scale-in">
+      <div class="modal-header">
+        <h3>{{ editMode() ? 'Edit Slot' : 'Add New Slot' }}</h3>
+        <button (click)="showModal.set(false)" class="modal-close-btn"><i class="bi bi-x-lg"></i></button>
+      </div>
+      <div class="modal-body">
+        @if (error()) {
+          <div class="form-error-box">{{ error() }}</div>
+        }
+        <div>
+          <label class="form-label">Type</label>
+          <select class="input-tw" [(ngModel)]="form.type">
+            <option value="2W">2-Wheeler</option>
+            <option value="4W">4-Wheeler</option>
+          </select>
+        </div>
+        <div>
+          <label class="form-label">Location (Floor)</label>
+          <select class="input-tw" [(ngModel)]="form.location">
+            <option value="G">Ground (G)</option>
+            <option value="A">Floor A</option>
+            <option value="B">Floor B</option>
+            <option value="C">Floor C</option>
+            <option value="D">Floor D</option>
+          </select>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button (click)="showModal.set(false)" class="btn-secondary-tw">Cancel</button>
+        <button (click)="save()" [disabled]="saving()" class="btn-primary-tw">
+          @if (saving()) {
+            <svg class="animate-spin btn-spinner" fill="none" viewBox="0 0 24 24">
+              <circle class="spinner-track" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+              <path class="spinner-fill" fill="currentColor" d="M4 12a8 8 0 018-8v8z"></path>
+            </svg>
+          }
+          {{ editMode() ? 'Update' : 'Add Slot' }}
+        </button>
+      </div>
+    </div>
+  </div>
+}

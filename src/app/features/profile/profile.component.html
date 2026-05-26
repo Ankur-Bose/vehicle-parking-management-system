@@ -1,0 +1,129 @@
+<div class="animate-fade-in profile-wrapper">
+  <div class="profile-page-header">
+    <h1 class="page-title">
+      <i class="bi bi-person-circle" style="color:#4f46e5"></i> My Profile
+    </h1>
+    <p class="page-subtitle">View and update your account details</p>
+  </div>
+
+  @if (success()) {
+    <div class="alert alert-success animate-fade-in">
+      <i class="bi bi-check-circle-fill"></i> {{ success() }}
+      <button (click)="success.set('')" class="alert-close"><i class="bi bi-x-lg"></i></button>
+    </div>
+  }
+  @if (error()) {
+    <div class="alert alert-error animate-fade-in">
+      <i class="bi bi-exclamation-circle-fill"></i> {{ error() }}
+      <button (click)="error.set('')" class="alert-close"><i class="bi bi-x-lg"></i></button>
+    </div>
+  }
+
+  @if (loading()) {
+    <div class="spinner-container">
+      <svg class="animate-spin profile-spinner" fill="none" viewBox="0 0 24 24">
+        <circle class="spinner-track" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+        <path class="spinner-fill" fill="currentColor" d="M4 12a8 8 0 018-8v8z"></path>
+      </svg>
+    </div>
+  } @else if (profile()) {
+    <div class="card-tw profile-card animate-slide-up">
+      <!-- Profile header -->
+      <div class="profile-banner gradient-primary">
+        <div class="profile-avatar">
+          {{ profile()!.name.charAt(0).toUpperCase() }}
+        </div>
+        <div class="profile-banner-info">
+          <h2 class="profile-name">{{ profile()!.name }}</h2>
+          <p class="profile-email">{{ profile()!.email }}</p>
+          <span class="profile-role-chip">
+            <i class="bi bi-shield-fill"></i> {{ profile()!.role }}
+          </span>
+        </div>
+        <div class="profile-banner-action">
+          @if (!editMode()) {
+            <button (click)="editMode.set(true)" class="profile-edit-btn">
+              <i class="bi bi-pencil"></i> Edit Profile
+            </button>
+          }
+        </div>
+      </div>
+
+      <!-- Profile details -->
+      <div class="profile-body">
+        @if (!editMode()) {
+          <div class="profile-fields">
+            <div class="profile-field">
+              <div class="field-icon">
+                <i class="bi bi-person"></i>
+              </div>
+              <div>
+                <p class="field-label">Full Name</p>
+                <p class="field-value">{{ profile()!.name }}</p>
+              </div>
+            </div>
+            <div class="profile-field">
+              <div class="field-icon">
+                <i class="bi bi-envelope"></i>
+              </div>
+              <div>
+                <p class="field-label">Email Address</p>
+                <p class="field-value">{{ profile()!.email }}</p>
+              </div>
+            </div>
+            <div class="profile-field">
+              <div class="field-icon">
+                <i class="bi bi-telephone"></i>
+              </div>
+              <div>
+                <p class="field-label">Phone Number</p>
+                <p class="field-value">{{ profile()!.phoneNumber }}</p>
+              </div>
+            </div>
+            <div class="profile-field profile-field--last">
+              <div class="field-icon">
+                <i class="bi bi-calendar"></i>
+              </div>
+              <div>
+                <p class="field-label">Member Since</p>
+                <p class="field-value">{{ profile()!.createdAt | date:'dd MMMM yyyy' }}</p>
+              </div>
+            </div>
+          </div>
+        } @else {
+          <form (ngSubmit)="save()" class="profile-form">
+            <div>
+              <label class="form-label">Full Name</label>
+              <input class="input-tw" [(ngModel)]="form.name" name="name" placeholder="Your full name" />
+            </div>
+            <div>
+              <label class="form-label">Email Address</label>
+              <input class="input-tw profile-email-input" [value]="profile()!.email" disabled />
+              <p class="form-hint">Email cannot be changed</p>
+            </div>
+            <div>
+              <label class="form-label">Phone Number</label>
+              <input class="input-tw" [(ngModel)]="form.phoneNumber" name="phone" placeholder="10-digit number" maxlength="10" />
+            </div>
+            <div>
+              <label class="form-label">New Password <span class="optional">(leave blank to keep current)</span></label>
+              <input class="input-tw" type="password" [(ngModel)]="form.password" name="password" placeholder="New password" autocomplete="new-password" />
+            </div>
+            <div class="profile-form-actions">
+              <button type="button" (click)="cancelEdit()" class="btn-secondary-tw">Cancel</button>
+              <button type="submit" [disabled]="saving()" class="btn-primary-tw">
+                @if (saving()) {
+                  <svg class="animate-spin btn-spinner" fill="none" viewBox="0 0 24 24">
+                    <circle class="spinner-track" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                    <path class="spinner-fill" fill="currentColor" d="M4 12a8 8 0 018-8v8z"></path>
+                  </svg>
+                }
+                Save Changes
+              </button>
+            </div>
+          </form>
+        }
+      </div>
+    </div>
+  }
+</div>

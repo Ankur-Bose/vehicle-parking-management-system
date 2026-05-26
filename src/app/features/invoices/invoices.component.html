@@ -1,0 +1,210 @@
+<div class="animate-fade-in">
+  <!-- Header -->
+  <div class="page-header">
+    <div>
+      <h1 class="page-title">
+        <i class="bi bi-receipt-cutoff" style="color:#4f46e5"></i> Invoices &amp; Billing
+      </h1>
+      <p class="page-subtitle">{{ invoices().length }} total invoices</p>
+    </div>
+  </div>
+
+  <!-- Alerts -->
+  @if (success()) {
+    <div class="alert alert-success animate-fade-in">
+      <i class="bi bi-check-circle-fill"></i> {{ success() }}
+      <button (click)="success.set('')" class="alert-close"><i class="bi bi-x-lg"></i></button>
+    </div>
+  }
+  @if (error()) {
+    <div class="alert alert-error animate-fade-in">
+      <i class="bi bi-exclamation-circle-fill"></i> {{ error() }}
+      <button (click)="error.set('')" class="alert-close"><i class="bi bi-x-lg"></i></button>
+    </div>
+  }
+
+  <!-- Summary Cards -->
+  <div class="inv-stats-grid">
+    <div class="card-tw inv-stat animate-slide-up delay-75">
+      <p class="inv-stat-label">Total Revenue</p>
+      <p class="inv-stat-value inv-stat-value--emerald">₹{{ totalRevenue }}</p>
+      <p class="inv-stat-sub">from paid invoices</p>
+    </div>
+    <div class="card-tw inv-stat animate-slide-up delay-100">
+      <p class="inv-stat-label">Paid</p>
+      <p class="inv-stat-value">{{ paidCount }}</p>
+      <p class="inv-stat-sub">invoices paid</p>
+    </div>
+    <div class="card-tw inv-stat animate-slide-up delay-150">
+      <p class="inv-stat-label">Pending</p>
+      <p class="inv-stat-value inv-stat-value--amber">{{ pendingCount }}</p>
+      <p class="inv-stat-sub">awaiting payment</p>
+    </div>
+  </div>
+
+  <!-- Filters -->
+  <div class="filter-bar">
+    <div class="filter-row">
+      <div class="search-field">
+        <i class="bi bi-search search-field-icon"></i>
+        <input class="input-tw" placeholder="Search vehicle number…" [(ngModel)]="searchVehicle" />
+      </div>
+      <select class="input-tw inv-filter-sel" [(ngModel)]="filterStatus" (change)="load()">
+        <option value="">ALL STATUSES</option>
+        <option value="PENDING">PENDING</option>
+        <option value="PAID">PAID</option>
+        <option value="CANCELLED">CANCELLED</option>
+      </select>
+      <button (click)="filterStatus=''; searchVehicle=''; load()" class="clear-btn">
+        <i class="bi bi-x-circle"></i> Clear
+      </button>
+      <span class="result-count">{{ filtered.length }} result(s)</span>
+    </div>
+  </div>
+
+  <!-- Table -->
+  <div class="table-card">
+    @if (loading()) {
+      <div class="spinner-container">
+        <svg class="animate-spin inv-spinner" fill="none" viewBox="0 0 24 24">
+          <circle class="spinner-track" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+          <path class="spinner-fill" fill="currentColor" d="M4 12a8 8 0 018-8v8z"></path>
+        </svg>
+      </div>
+    } @else if (filtered.length === 0) {
+      <div class="empty-state">
+        <i class="bi bi-receipt empty-state-icon"></i>
+        <p class="empty-state-title">No invoices found</p>
+      </div>
+    } @else {
+      <div class="table-scroll">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>Invoice #</th>
+              <th>Vehicle</th>
+              <th>Type</th>
+              <th>Duration</th>
+              <th>Amount</th>
+              <th>Payment</th>
+              <th>Status</th>
+              <th>Date</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (inv of filtered; track inv.invoiceId) {
+              <tr>
+                <td class="td-primary">{{ inv.invoiceId }}</td>
+                <td class="td-primary">{{ inv.vehicleNumber }}</td>
+                <td>
+                  @if (inv.slotType === '2W') {
+                    <span class="badge-2w">2W</span>
+                  } @else {
+                    <span class="badge-4w">4W</span>
+                  }
+                </td>
+                <td class="td-secondary">{{ formatDuration(inv.durationMinutes) }}</td>
+                <td class="inv-amount">₹{{ inv.amount | number:'1.2-2' }}</td>
+                <td class="td-secondary">{{ inv.paymentMethod || '—' }}</td>
+                <td>
+                  @if (inv.status === 'PAID') { <span class="badge-completed">Paid</span> }
+                  @else if (inv.status === 'PENDING') { <span class="badge-pending">Pending</span> }
+                  @else { <span class="badge-cancelled">Cancelled</span> }
+                </td>
+                <td class="td-secondary">{{ inv.createdAt | date:'dd MMM, HH:mm' }}</td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    }
+  </div>
+</div>
+
+<!-- Pay Modal -->
+@if (showPayModal()) {
+  <div class="modal-overlay" (click)="showPayModal.set(false)"></div>
+  <div class="modal-wrapper">
+    <div class="modal-box modal-box--sm animate-scale-in">
+      <div class="modal-header">
+        <h3>Process Payment</h3>
+        <button (click)="showPayModal.set(false)" class="modal-close-btn"><i class="bi bi-x-lg"></i></button>
+      </div>
+      <div class="modal-body">
+        @if (selectedInvoice()) {
+          <div class="summary-box">
+            <div class="summary-row">
+              <span class="s-label">Invoice</span>
+              <span class="s-value">#{{ selectedInvoice()!.invoiceId }}</span>
+            </div>
+            <div class="summary-row">
+              <span class="s-label">Vehicle</span>
+              <span class="s-value">{{ selectedInvoice()!.vehicleNumber }}</span>
+            </div>
+            <div class="summary-row summary-row--total">
+              <span class="s-label">Amount</span>
+              <span class="s-value">₹{{ selectedInvoice()!.amount | number:'1.2-2' }}</span>
+            </div>
+          </div>
+        }
+        <div>
+          <label class="form-label" style="margin-bottom:0.5rem">Payment Method</label>
+          <div class="payment-method-grid">
+            <button type="button" (click)="payForm.paymentMethod.set('UPI')"
+              class="payment-method-btn" [class.active]="payForm.paymentMethod() === 'UPI'">
+              <i class="bi bi-qr-code"></i> UPI
+            </button>
+            <button type="button" (click)="payForm.paymentMethod = $any('CASH')"
+              class="payment-method-btn" [class.active]="payForm.paymentMethod() === 'CASH'">
+              <i class="bi bi-cash-coin"></i> Cash
+            </button>
+            <button type="button" (click)="payForm.paymentMethod = $any('CARD')"
+              class="payment-method-btn" [class.active]="payForm.paymentMethod() === 'CARD'">
+              <i class="bi bi-credit-card"></i> Card
+            </button>
+            <button type="button" (click)="payForm.paymentMethod = $any('ONLINE')"
+              class="payment-method-btn" [class.active]="payForm.paymentMethod() === 'ONLINE'">
+              <i class="bi bi-globe"></i> Online
+            </button>
+          </div>
+        </div>
+        @if (error()) {
+          <div class="form-error-box">{{ error() }}</div>
+        }
+      </div>
+      <div class="modal-footer">
+        <button (click)="showPayModal.set(false)" class="btn-secondary-tw">Cancel</button>
+        <button (click)="pay()" [disabled]="saving()" class="btn-emerald">
+          @if (saving()) {
+            <svg class="animate-spin btn-spinner" fill="none" viewBox="0 0 24 24">
+              <circle class="spinner-track" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+              <path class="spinner-fill" fill="currentColor" d="M4 12a8 8 0 018-8v8z"></path>
+            </svg>
+          }
+          Confirm Payment
+        </button>
+      </div>
+    </div>
+  </div>
+}
+
+<!-- QR Modal -->
+@if (showQrModal()) {
+  <div class="modal-overlay" (click)="showQrModal.set(false)"></div>
+  <div class="modal-wrapper">
+    <div class="modal-box modal-box--sm animate-scale-in" style="text-align:center;padding:1.5rem">
+      <div class="success-icon-circle" style="margin-bottom:1rem">
+        <i class="bi bi-check-circle-fill"></i>
+      </div>
+      <h3 class="qr-title">Invoice Generated</h3>
+      @if (qrData()) {
+        <p class="qr-subtitle">Invoice #{{ qrData()!.invoiceId }} · ₹{{ qrData()!.amount | number:'1.2-2' }}</p>
+        @if (qrData()!.paymentQRCodeBase64) {
+          <img [src]="'data:image/png;base64,' + qrData()!.paymentQRCodeBase64"
+            alt="QR" class="qr-image" style="margin-bottom:1rem" />
+        }
+      }
+      <button (click)="showQrModal.set(false)" class="btn-primary-tw" style="width:100%">Close</button>
+    </div>
+  </div>
+}

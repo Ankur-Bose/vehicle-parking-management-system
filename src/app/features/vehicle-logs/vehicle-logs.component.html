@@ -1,0 +1,509 @@
+<div class="animate-fade-in">
+  <!-- Header -->
+  <div class="page-header">
+    <div>
+      <h1 class="page-title">
+        <i class="bi bi-car-front-fill" style="color:#4f46e5"></i> Vehicle Logs
+      </h1>
+      <p class="page-subtitle">
+        <span class="count-active">{{ activeCount }}</span> active ·
+        <span class="count-completed">{{ completedCount }} completed</span>
+      </p>
+    </div>
+    <div class="vl-header-btns">
+      <button (click)="openEntryModal()" class="btn-primary-tw">
+        <i class="bi bi-box-arrow-in-right"></i> Log Entry
+      </button>
+      <button (click)="openExitModal()" class="btn-amber">
+        <i class="bi bi-box-arrow-right"></i> Log Exit
+      </button>
+    </div>
+  </div>
+
+  <!-- Alerts -->
+  @if (success()) {
+    <div class="alert alert-success animate-fade-in">
+      <i class="bi bi-check-circle-fill"></i> {{ success() }}
+      <button (click)="success.set('')" class="alert-close"><i class="bi bi-x-lg"></i></button>
+    </div>
+  }
+  @if (error()) {
+    <div class="alert alert-error animate-fade-in">
+      <i class="bi bi-exclamation-circle-fill"></i> {{ error() }}
+      <button (click)="error.set('')" class="alert-close"><i class="bi bi-x-lg"></i></button>
+    </div>
+  }
+
+  <!-- Filters -->
+  <div class="filter-bar">
+    <div class="filter-row">
+      <div class="search-field">
+        <i class="bi bi-search search-field-icon"></i>
+        <input class="input-tw" placeholder="Search vehicle number…" [(ngModel)]="searchVehicle" />
+      </div>
+      <select class="input-tw vl-filter-sel" [(ngModel)]="filterStatus">
+        <option value="">ALL STATUSES</option>
+        <option value="ACTIVE">ACTIVE</option>
+        <option value="COMPLETED">COMPLETED</option>
+      </select>
+      <button (click)="filterStatus=''; searchVehicle=''" class="clear-btn">
+        <i class="bi bi-x-circle"></i> Clear
+      </button>
+    </div>
+  </div>
+
+  <!-- Table -->
+  <div class="table-card">
+    @if (loading()) {
+      <div class="spinner-container">
+        <svg class="animate-spin vl-spinner" fill="none" viewBox="0 0 24 24">
+          <circle class="spinner-track" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+          <path class="spinner-fill" fill="currentColor" d="M4 12a8 8 0 018-8v8z"></path>
+        </svg>
+      </div>
+    } @else if (filtered.length === 0) {
+      <div class="empty-state">
+        <i class="bi bi-car-front empty-state-icon"></i>
+        <p class="empty-state-title">No vehicle logs found</p>
+      </div>
+    } @else {
+      <div class="table-scroll">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>Log ID</th>
+              <th>Vehicle</th>
+              <th>Slot</th>
+              <th>Entry Time</th>
+              <th>Exit Time</th>
+              <th>Duration</th>
+              <th>Status</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (log of filtered; track log.logId) {
+              <tr>
+                <td class="td-id">{{ log.logId }}</td>
+                <td class="td-primary">{{ log.vehicleNumber }}</td>
+                <td><span class="slot-chip">{{ log.slotId }}</span></td>
+                <td class="td-secondary">{{ log.entryTime | date:'dd MMM, HH:mm' }}</td>
+                <td class="td-secondary">{{ log.exitTime ? (log.exitTime | date:'dd MMM, HH:mm') : '—' }}</td>
+                <td class="td-secondary">{{ formatDuration(log.durationMinutes) }}</td>
+                <td>
+                  @if (log.status === 'ACTIVE') { <span class="badge-active">Active</span> }
+                  @else { <span class="badge-completed">Completed</span> }
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    }
+  </div>
+</div>
+
+<!-- Entry Modal -->
+@if (showEntryModal()) {
+  <div class="modal-overlay" (click)="showEntryModal.set(false)"></div>
+  <div class="modal-wrapper">
+    <div class="modal-box modal-box--sm animate-scale-in">
+      <div class="modal-header">
+        <h3><i class="bi bi-box-arrow-in-right" style="color:#4f46e5"></i> Log Vehicle Entry</h3>
+        <button (click)="showEntryModal.set(false)" class="modal-close-btn"><i class="bi bi-x-lg"></i></button>
+      </div>
+      <div class="modal-body">
+        @if (error()) {
+          <div class="form-error-box">{{ error() }}</div>
+        }
+
+        <!-- Mode tabs -->
+        <div class="entry-mode-tabs">
+          <button type="button" class="entry-mode-tab"
+            [class.active]="entryMode === 'reserved'"
+            (click)="switchEntryMode('reserved')">
+            <i class="bi bi-bookmark-check-fill"></i> Reserved Vehicle
+          </button>
+          <button type="button" class="entry-mode-tab"
+            [class.active]="entryMode === 'walkin'"
+            (click)="switchEntryMode('walkin')">
+            <i class="bi bi-person-walking"></i> Walk-in Vehicle
+          </button>
+        </div>
+
+        <!-- RESERVED MODE -->
+        @if (entryMode === 'reserved') {
+          <div>
+            <label class="form-label">Search Reserved Vehicle <span class="required">*</span></label>
+            @if (activeReservations().length > 0) {
+              <div class="vl-search-wrap">
+                <div class="search-field">
+                  <i class="bi bi-search search-field-icon" style="font-size:0.75rem"></i>
+                  <input class="input-tw" style="padding-left:2.75rem;padding-right:2.25rem"
+                    placeholder="Type vehicle number or name…"
+                    [(ngModel)]="entrySearch" autocomplete="off"
+                    (input)="showEntryDropdown = true"
+                    (focus)="showEntryDropdown = true"
+                    (blur)="closeEntryDropdown()" />
+                  @if (entrySearch) {
+                    <button type="button" (click)="clearEntrySearch()" class="search-clear">
+                      <i class="bi bi-x-circle-fill"></i>
+                    </button>
+                  }
+                </div>
+                @if (showEntryDropdown && entrySearch) {
+                  <div class="suggestion-dropdown">
+                    @if (filteredReservations.length > 0) {
+                      @for (res of filteredReservations; track res.id) {
+                        <button type="button" (mousedown)="selectReservationFromDropdown(res)"
+                          class="suggestion-item">
+                          <span class="vehicle-num">{{ res.vehicleNumber }}</span>
+                          <span class="vehicle-detail">Slot #{{ res.slotId }} · {{ res.slotType }} · {{ res.userName }}</span>
+                        </button>
+                      }
+                    } @else {
+                      <div class="suggestion-empty">No matching reservations found</div>
+                    }
+                  </div>
+                }
+              </div>
+              @if (reservationSelected && reservedVehicleNumber && reservedSlotId) {
+                <div class="selection-chip">
+                  <i class="bi bi-check-circle-fill" style="color:#059669"></i>
+                  <span><strong>{{ reservedVehicleNumber }}</strong> → Slot #{{ reservedSlotId }} selected</span>
+                </div>
+                <div class="slot-preassigned" style="margin-top:0.5rem">
+                  <i class="bi bi-geo-alt-fill" style="color:#4f46e5"></i>
+                  Slot #{{ reservedSlotId }}
+                  <span class="slot-label">Pre-assigned from reservation</span>
+                </div>
+              }
+            } @else {
+              <div class="info-note">
+                <i class="bi bi-info-circle"></i>
+                No active reservations found. Use <strong>Walk-in</strong> tab to log entry.
+              </div>
+            }
+          </div>
+        }
+
+        <!-- WALK-IN MODE -->
+        @if (entryMode === 'walkin') {
+          <div>
+            <label class="form-label">Vehicle Number <span class="required">*</span></label>
+            <input class="input-tw" style="text-transform:uppercase"
+              [(ngModel)]="walkinVehicleNumber"
+              placeholder="e.g. TN01AB1234" maxlength="10"
+              (input)="walkinVehicleNumber = walkinVehicleNumber.toUpperCase()" />
+          </div>
+          <div>
+            <label class="form-label">Select Available Slot <span class="required">*</span></label>
+            @if (availableSlots().length > 0) {
+              <select class="input-tw" [(ngModel)]="walkinSlotId">
+                <option [value]="0" disabled>Select a free slot</option>
+                @for (slot of availableSlots(); track slot.id) {
+                  <option [value]="slot.id">{{ slot.location }}-{{ slot.id }} ({{ slot.type }})</option>
+                }
+              </select>
+            } @else {
+              <div class="info-note" style="color:#dc2626;background:#fef2f2;border-color:#fecaca">
+                <i class="bi bi-exclamation-circle"></i>
+                No available slots right now. All slots are occupied or reserved.
+              </div>
+            }
+          </div>
+        }
+
+      </div>
+      <div class="modal-footer">
+        <button (click)="showEntryModal.set(false)" class="btn-secondary-tw">Cancel</button>
+        <button (click)="logEntry()" [disabled]="saving()" class="btn-primary-tw">
+          @if (saving()) {
+            <svg class="animate-spin btn-spinner" fill="none" viewBox="0 0 24 24">
+              <circle class="spinner-track" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+              <path class="spinner-fill" fill="currentColor" d="M4 12a8 8 0 018-8v8z"></path>
+            </svg>
+          }
+          Log Entry
+        </button>
+      </div>
+    </div>
+  </div>
+}
+
+<!-- Exit Modal -->
+@if (showExitModal()) {
+  <div class="modal-overlay" (click)="showExitModal.set(false)"></div>
+  <div class="modal-wrapper">
+    <div class="modal-box modal-box--sm animate-scale-in">
+      <div class="modal-header">
+        <h3><i class="bi bi-box-arrow-right" style="color:#f59e0b"></i> Log Vehicle Exit</h3>
+        <button (click)="showExitModal.set(false)" class="modal-close-btn"><i class="bi bi-x-lg"></i></button>
+      </div>
+      <div class="modal-body">
+        @if (error()) {
+          <div class="form-error-box">{{ error() }}</div>
+        }
+        <div>
+          <label class="form-label">Select Vehicle to Exit <span class="required">*</span></label>
+          @if (activeVehicleLogs.length > 0) {
+            <div class="vl-search-wrap">
+              <div class="search-field">
+                <i class="bi bi-search search-field-icon" style="font-size:0.75rem"></i>
+                <input class="input-tw" style="padding-left:2.75rem;padding-right:2.25rem"
+                  placeholder="Type vehicle number…"
+                  [(ngModel)]="exitSearch" autocomplete="off"
+                  (input)="showExitDropdown = true; exitVehicleNumber = ''"
+                  (focus)="showExitDropdown = true"
+                  (blur)="closeExitDropdown()" />
+                @if (exitSearch) {
+                  <button type="button" (click)="clearExitSearch()" class="search-clear">
+                    <i class="bi bi-x-circle-fill"></i>
+                  </button>
+                }
+              </div>
+              @if (showExitDropdown && exitSearch) {
+                <div class="suggestion-dropdown">
+                  @if (filteredActiveLogs.length > 0) {
+                    @for (log of filteredActiveLogs; track log.logId) {
+                      <button type="button" (mousedown)="selectExitFromDropdown(log)"
+                        class="suggestion-item suggestion-item--amber">
+                        <span class="vehicle-num">{{ log.vehicleNumber }}</span>
+                        <span class="vehicle-detail">Slot #{{ log.slotId }} · since {{ log.entryTime | date:'dd MMM, HH:mm' }}</span>
+                      </button>
+                    }
+                  } @else {
+                    <div class="suggestion-empty">No matching vehicles inside</div>
+                  }
+                </div>
+              }
+            </div>
+            @if (exitVehicleNumber) {
+              <div class="selection-chip selection-chip--amber">
+                <i class="bi bi-check-circle-fill" style="color:#f59e0b"></i>
+                <span><strong>{{ exitVehicleNumber }}</strong> selected for exit</span>
+              </div>
+            }
+          } @else {
+            <div class="info-note" style="margin-bottom:0.5rem">
+              <i class="bi bi-info-circle"></i>No active vehicles inside. Enter vehicle number manually.
+            </div>
+            <input class="input-tw" style="text-transform:uppercase" [(ngModel)]="exitVehicleNumber"
+              placeholder="e.g. TN01AB1234" maxlength="10"
+              (input)="exitVehicleNumber = exitVehicleNumber.toUpperCase()" />
+          }
+        </div>
+        <p class="info-note">
+          <i class="bi bi-info-circle"></i>An invoice will be generated automatically after exit.
+        </p>
+      </div>
+      <div class="modal-footer">
+        <button (click)="showExitModal.set(false)" class="btn-secondary-tw">Cancel</button>
+        <button (click)="logExit()" [disabled]="saving()" class="btn-amber">
+          @if (saving()) {
+            <svg class="animate-spin btn-spinner" fill="none" viewBox="0 0 24 24">
+              <circle class="spinner-track" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+              <path class="spinner-fill" fill="currentColor" d="M4 12a8 8 0 018-8v8z"></path>
+            </svg>
+          }
+          Log Exit
+        </button>
+      </div>
+    </div>
+  </div>
+}
+
+<!-- Invoice Modal (auto after exit) -->
+@if (showInvoiceModal()) {
+  <div class="modal-overlay"></div>
+  <div class="modal-wrapper">
+    <div class="modal-box animate-scale-in">
+
+      <!-- Header -->
+      <div class="modal-header">
+        <div class="modal-header-inner">
+          <i class="bi bi-receipt-cutoff" style="color:#4f46e5;font-size:1.125rem"></i>
+          <h3>
+            @if (!awaitingConfirmation() && !paymentDone()) { Invoice &amp; Payment }
+            @else if (awaitingConfirmation() && paymentMethod() === 'CASH') { Collect Cash }
+            @else if (awaitingConfirmation() && paymentMethod() === 'UPI') { UPI Payment }
+            @else if (paymentDone()) { Payment Confirmed }
+          </h3>
+        </div>
+        @if (!awaitingConfirmation() && !paymentDone()) {
+          <button (click)="closeInvoiceModal()" class="modal-close-btn" title="Close — invoice will remain pending in Invoices tab">
+            <i class="bi bi-x-lg"></i>
+          </button>
+        }
+      </div>
+
+      <div class="modal-body">
+
+        <!-- STEP 1: Method selection -->
+        @if (!awaitingConfirmation() && !paymentDone()) {
+          @if (exitedLog()) {
+            <div class="summary-box">
+              <div class="summary-row">
+                <span class="s-label">Vehicle</span>
+                <span class="s-value">{{ exitedLog()!.vehicleNumber }}</span>
+              </div>
+              <div class="summary-row">
+                <span class="s-label">Slot</span>
+                <span class="s-value">#{{ exitedLog()!.slotId }}</span>
+              </div>
+              <div class="summary-row">
+                <span class="s-label">Duration</span>
+                <span class="s-value">{{ formatDuration(exitedLog()!.durationMinutes) }}</span>
+              </div>
+            </div>
+          }
+          <div>
+            <label class="form-label" style="margin-bottom:0.5rem">Select Payment Method</label>
+            <div class="payment-options-grid">
+              <button type="button" (click)="paymentMethod.set('UPI')"
+                class="payment-option-btn"
+                [class.selected--upi]="paymentMethod() === 'UPI'">
+                <i class="bi bi-qr-code"></i> UPI / QR
+              </button>
+              <button type="button" (click)="paymentMethod.set('CASH')"
+                class="payment-option-btn"
+                [class.selected--cash]="paymentMethod() === 'CASH'">
+                <i class="bi bi-cash-coin"></i> Cash
+              </button>
+            </div>
+          </div>
+          @if (error()) {
+            <div class="form-error-box">{{ error() }}</div>
+          }
+        }
+
+        <!-- STEP 2a: CASH confirmation -->
+        @if (awaitingConfirmation() && paymentMethod() === 'CASH') {
+          <div class="cash-display">
+            <i class="bi bi-cash-coin cash-display-icon"></i>
+            <p class="cash-hint">Amount to collect from customer</p>
+            <p class="cash-amount">₹{{ generatedInvoice()!.amount | number:'1.2-2' }}</p>
+          </div>
+          <div class="summary-box">
+            <div class="summary-row">
+              <span class="s-label">Vehicle</span>
+              <span class="s-value">{{ generatedInvoice()!.vehicleNumber }}</span>
+            </div>
+            <div class="summary-row">
+              <span class="s-label">Duration</span>
+              <span class="s-value">{{ formatDuration(generatedInvoice()!.durationMinutes) }}</span>
+            </div>
+            <div class="summary-row">
+              <span class="s-label">Invoice #</span>
+              <span class="s-value">{{ generatedInvoice()!.invoiceId }}</span>
+            </div>
+          </div>
+          <p class="cash-instruction">Collect the cash from the customer, then confirm below.</p>
+        }
+
+        <!-- STEP 2b: UPI confirmation -->
+        @if (awaitingConfirmation() && paymentMethod() === 'UPI') {
+          <div class="upi-display">
+            <p class="upi-hint">Ask the customer to scan &amp; pay</p>
+            @if (generatedInvoice()!.paymentQRCodeBase64) {
+              <img [src]="'data:image/png;base64,' + generatedInvoice()!.paymentQRCodeBase64"
+                alt="UPI QR" class="qr-image" />
+            }
+            <p class="upi-amount">₹{{ generatedInvoice()!.amount | number:'1.2-2' }}</p>
+          </div>
+          <div class="summary-box">
+            <div class="summary-row">
+              <span class="s-label">Vehicle</span>
+              <span class="s-value">{{ generatedInvoice()!.vehicleNumber }}</span>
+            </div>
+            <div class="summary-row">
+              <span class="s-label">Duration</span>
+              <span class="s-value">{{ formatDuration(generatedInvoice()!.durationMinutes) }}</span>
+            </div>
+            <div class="summary-row">
+              <span class="s-label">Invoice #</span>
+              <span class="s-value">{{ generatedInvoice()!.invoiceId }}</span>
+            </div>
+          </div>
+          <p class="cash-instruction">Once the customer has completed the UPI payment, confirm below.</p>
+        }
+
+        <!-- STEP 3: Payment done -->
+        @if (paymentDone()) {
+          <div class="payment-done">
+            <div class="success-icon-circle" style="margin-bottom:1rem">
+              <i class="bi bi-check-circle-fill"></i>
+            </div>
+            <h4>Payment Confirmed!</h4>
+            <p>Invoice #{{ generatedInvoice()!.invoiceId }} · {{ paymentMethod() }}</p>
+          </div>
+          <div class="summary-box">
+            <div class="summary-row">
+              <span class="s-label">Vehicle</span>
+              <span class="s-value">{{ generatedInvoice()!.vehicleNumber }}</span>
+            </div>
+            <div class="summary-row">
+              <span class="s-label">Duration</span>
+              <span class="s-value">{{ formatDuration(generatedInvoice()!.durationMinutes) }}</span>
+            </div>
+            <div class="summary-row summary-row--total">
+              <span class="s-label">Amount Paid</span>
+              <span class="s-value">₹{{ generatedInvoice()!.amount | number:'1.2-2' }}</span>
+            </div>
+          </div>
+        }
+
+      </div>
+
+      <!-- Footer buttons -->
+      <div class="modal-footer modal-footer--between">
+        @if (!awaitingConfirmation() && !paymentDone()) {
+          <button (click)="closeInvoiceModal()" [disabled]="generatingInvoice()" class="btn-back">
+            <i class="bi bi-arrow-left"></i> Back
+          </button>
+          <button (click)="proceedToConfirm()" [disabled]="generatingInvoice()" class="btn-primary-tw">
+            @if (generatingInvoice()) {
+              <svg class="animate-spin btn-spinner" fill="none" viewBox="0 0 24 24">
+                <circle class="spinner-track" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                <path class="spinner-fill" fill="currentColor" d="M4 12a8 8 0 018-8v8z"></path>
+              </svg>
+            }
+            Continue <i class="bi bi-arrow-right"></i>
+          </button>
+        }
+        @if (awaitingConfirmation() && paymentMethod() === 'CASH') {
+          <button (click)="backToMethodSelect()" class="btn-secondary-tw">
+            <i class="bi bi-arrow-left"></i> Change Method
+          </button>
+          <button (click)="confirmAndPay()" [disabled]="generatingInvoice()" class="btn-emerald">
+            @if (generatingInvoice()) {
+              <svg class="animate-spin btn-spinner" fill="none" viewBox="0 0 24 24">
+                <circle class="spinner-track" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                <path class="spinner-fill" fill="currentColor" d="M4 12a8 8 0 018-8v8z"></path>
+              </svg>
+            }
+            <i class="bi bi-check-lg"></i> Cash Received
+          </button>
+        }
+        @if (awaitingConfirmation() && paymentMethod() === 'UPI') {
+          <button (click)="backToMethodSelect()" class="btn-secondary-tw">
+            <i class="bi bi-arrow-left"></i> Change Method
+          </button>
+          <button (click)="confirmAndPay()" [disabled]="generatingInvoice()" class="btn-primary-tw">
+            @if (generatingInvoice()) {
+              <svg class="animate-spin btn-spinner" fill="none" viewBox="0 0 24 24">
+                <circle class="spinner-track" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                <path class="spinner-fill" fill="currentColor" d="M4 12a8 8 0 018-8v8z"></path>
+              </svg>
+            }
+            <i class="bi bi-check-lg"></i> Payment Received
+          </button>
+        }
+        @if (paymentDone()) {
+          <div></div>
+          <button (click)="closeInvoiceModal()" class="btn-primary-tw">Done</button>
+        }
+      </div>
+
+    </div>
+  </div>
+}

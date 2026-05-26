@@ -1,0 +1,29 @@
+:host { display: block; }
+
+.app-shell {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  overflow: hidden;
+}
+
+.app-body {
+  display: flex;
+  flex: 1;
+  overflow: hidden;
+}
+
+.page-content {
+  flex: 1;
+  overflow-y: auto;
+  background: #f8fafc;
+  padding: 1rem;
+}
+
+@media (min-width: 768px) {
+  .page-content { padding: 1.5rem; }
+}
+
+@media (max-width: 767px) {
+  .page-content { padding: 0.75rem !important; }
+}

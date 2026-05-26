@@ -1,0 +1,33 @@
+<header class="app-navbar">
+  <!-- Brand -->
+  <a routerLink="/dashboard" class="brand-link">
+    <div class="brand-icon">
+      <i class="bi bi-p-circle-fill"></i>
+    </div>
+    <span class="brand-name">VPMS</span>
+    <span class="brand-tagline">Vehicle Parking Management</span>
+  </a>
+
+  <div class="nav-spacer"></div>
+
+  <!-- User info & logout -->
+  <div class="nav-actions">
+    <div class="user-info">
+      <span class="user-email-chip">
+        <i class="bi bi-person-circle"></i>
+        {{ auth.getEmail() }}
+      </span>
+      <span class="role-chip"
+        [class.role-admin]="auth.isAdmin()"
+        [class.role-staff]="auth.isStaff()"
+        [class.role-customer]="auth.isCustomer()">
+        <i class="bi bi-shield-fill"></i>
+        {{ auth.getRole() }}
+      </span>
+    </div>
+    <button (click)="logout()" class="logout-btn">
+      <i class="bi bi-box-arrow-right"></i>
+      <span class="logout-text">Logout</span>
+    </button>
+  </div>
+</header>

@@ -1,0 +1,112 @@
+<aside class="sidebar-nav"
+  [class.expanded]="!collapsed()"
+  [class.collapsed]="collapsed()">
+
+  <!-- Toggle button -->
+  <div class="sidebar-toggle-bar">
+    <button (click)="toggle()" class="toggle-btn"
+      [title]="collapsed() ? 'Expand' : 'Collapse'">
+      <i class="bi" [class.bi-chevron-left]="!collapsed()" [class.bi-chevron-right]="collapsed()"></i>
+    </button>
+  </div>
+
+  <nav class="sidebar-nav-list">
+
+    <!-- Dashboard — all roles -->
+    <a routerLink="/dashboard" routerLinkActive="active-nav"
+      class="nav-item"
+      [title]="collapsed() ? 'Dashboard' : ''">
+      <i class="bi bi-speedometer2 nav-icon"></i>
+      @if (!collapsed()) { <span class="nav-label">Dashboard</span> }
+    </a>
+
+    <!-- Users — Admin only -->
+    @if (auth.isAdmin()) {
+      <a routerLink="/users" routerLinkActive="active-nav"
+        class="nav-item"
+        [title]="collapsed() ? 'Users' : ''">
+        <i class="bi bi-people-fill nav-icon"></i>
+        @if (!collapsed()) { <span class="nav-label">Users</span> }
+      </a>
+    }
+
+    <!-- Parking Slots — Admin & Staff -->
+    @if (auth.hasRole('ADMIN', 'STAFF')) {
+      <a routerLink="/slots" routerLinkActive="active-nav"
+        class="nav-item"
+        [title]="collapsed() ? 'Parking Slots' : ''">
+        <i class="bi bi-grid-3x3-gap-fill nav-icon"></i>
+        @if (!collapsed()) { <span class="nav-label">Parking Slots</span> }
+      </a>
+    }
+
+    <!-- Reservations — Admin/Staff -->
+    @if (auth.hasRole('ADMIN', 'STAFF')) {
+      <a routerLink="/reservations" routerLinkActive="active-nav"
+        class="nav-item"
+        [title]="collapsed() ? 'Reservations' : ''">
+        <i class="bi bi-calendar-check-fill nav-icon"></i>
+        @if (!collapsed()) { <span class="nav-label">Reservations</span> }
+      </a>
+    }
+
+    <!-- Book Slots — Customer -->
+    @if (auth.isCustomer()) {
+      <a routerLink="/reservations" routerLinkActive="active-nav"
+        class="nav-item"
+        [title]="collapsed() ? 'Book Slots' : ''">
+        <i class="bi bi-bookmark-plus-fill nav-icon"></i>
+        @if (!collapsed()) { <span class="nav-label">Book Slots</span> }
+      </a>
+    }
+
+    <!-- Vehicle Logs — Admin & Staff -->
+    @if (auth.hasRole('ADMIN', 'STAFF')) {
+      <a routerLink="/vehicle-logs" routerLinkActive="active-nav"
+        class="nav-item"
+        [title]="collapsed() ? 'Vehicle Logs' : ''">
+        <i class="bi bi-car-front-fill nav-icon"></i>
+        @if (!collapsed()) { <span class="nav-label">Vehicle Logs</span> }
+      </a>
+    }
+
+    <!-- Invoices — Admin & Staff -->
+    @if (auth.hasRole('ADMIN', 'STAFF')) {
+      <a routerLink="/invoices" routerLinkActive="active-nav"
+        class="nav-item"
+        [title]="collapsed() ? 'Invoices' : ''">
+        <i class="bi bi-receipt-cutoff nav-icon"></i>
+        @if (!collapsed()) { <span class="nav-label">Invoices</span> }
+      </a>
+    }
+
+    <!-- Booking History — Customer -->
+    @if (auth.isCustomer()) {
+      <a routerLink="/booking-history" routerLinkActive="active-nav"
+        class="nav-item"
+        [title]="collapsed() ? 'Booking History' : ''">
+        <i class="bi bi-clock-history nav-icon"></i>
+        @if (!collapsed()) { <span class="nav-label">Booking History</span> }
+      </a>
+    }
+
+    <!-- Profile — Customer -->
+    @if (auth.isCustomer()) {
+      <a routerLink="/profile" routerLinkActive="active-nav"
+        class="nav-item"
+        [title]="collapsed() ? 'Profile' : ''">
+        <i class="bi bi-person-circle nav-icon"></i>
+        @if (!collapsed()) { <span class="nav-label">Profile</span> }
+      </a>
+    }
+
+  </nav>
+
+  <!-- Status indicator -->
+  @if (!collapsed()) {
+    <div class="sidebar-footer">
+      <span class="status-dot animate-pulse"></span>
+      <span class="status-text">System Online</span>
+    </div>
+  }
+</aside>

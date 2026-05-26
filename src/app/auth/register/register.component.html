@@ -1,0 +1,146 @@
+<div class="auth-page">
+  <div class="auth-card animate-scale-in">
+
+    <!-- Left brand panel -->
+    <div class="auth-brand gradient-primary">
+      <div class="auth-brand-icon shadow-glow">
+        <i class="bi bi-p-circle-fill"></i>
+      </div>
+      <h2 class="auth-brand-title">Join VPMS Today</h2>
+      <p class="auth-brand-sub">Create your free customer account and manage your parking effortlessly</p>
+      <ul class="auth-brand-features">
+        <li class="auth-feature animate-slide-in-right delay-100">
+          <i class="bi bi-check-circle-fill feature-check"></i>
+          <span>Book parking slots in advance</span>
+        </li>
+        <li class="auth-feature animate-slide-in-right delay-200">
+          <i class="bi bi-check-circle-fill feature-check"></i>
+          <span>View &amp; manage your reservations</span>
+        </li>
+        <li class="auth-feature animate-slide-in-right delay-300">
+          <i class="bi bi-check-circle-fill feature-check"></i>
+          <span>Digital invoices &amp; QR payments</span>
+        </li>
+        <li class="auth-feature animate-slide-in-right delay-400">
+          <i class="bi bi-check-circle-fill feature-check"></i>
+          <span>2-Wheeler &amp; 4-Wheeler support</span>
+        </li>
+      </ul>
+    </div>
+
+    <!-- Right form panel -->
+    <div class="auth-form-panel">
+      <!-- Mobile logo -->
+      <div class="auth-mobile-logo">
+        <i class="bi bi-p-circle-fill auth-mobile-icon"></i>
+        <span class="auth-mobile-brand">VPMS</span>
+      </div>
+
+      <h3 class="auth-form-title">Create account</h3>
+      <p class="auth-form-sub">Fill in your details to get started</p>
+
+      @if (error()) {
+        <div class="alert alert-error animate-fade-in">
+          <i class="bi bi-exclamation-circle-fill" style="flex-shrink:0"></i>
+          <span>{{ error() }}</span>
+        </div>
+      }
+
+      <form (ngSubmit)="register()" novalidate class="auth-form">
+
+        <!-- Full Name -->
+        <div>
+          <label class="form-label">Full Name</label>
+          <div class="auth-input-group">
+            <span class="auth-input-prefix"><i class="bi bi-person"></i></span>
+            <input type="text" class="auth-input"
+              placeholder="Your full name"
+              [(ngModel)]="form.name" name="name" required autocomplete="name" />
+          </div>
+        </div>
+
+        <!-- Email -->
+        <div>
+          <label class="form-label">Email Address</label>
+          <div class="auth-input-group">
+            <span class="auth-input-prefix"><i class="bi bi-envelope"></i></span>
+            <input type="email" class="auth-input"
+              placeholder="you@example.com"
+              [(ngModel)]="form.email" name="email" required autocomplete="email" />
+          </div>
+        </div>
+
+        <!-- Phone -->
+        <div>
+          <label class="form-label">Phone Number</label>
+          <div class="auth-input-group">
+            <span class="auth-input-prefix"><i class="bi bi-telephone"></i></span>
+            <input type="tel" class="auth-input"
+              placeholder="10-digit mobile number"
+              [(ngModel)]="form.phoneNumber" name="phoneNumber"
+              maxlength="10" required autocomplete="tel" />
+          </div>
+        </div>
+
+        <!-- Password -->
+        <div>
+          <label class="form-label">Password</label>
+          <div class="auth-input-group">
+            <span class="auth-input-prefix"><i class="bi bi-lock"></i></span>
+            <input [type]="showPassword() ? 'text' : 'password'"
+              class="auth-input"
+              placeholder="Min. 6 characters"
+              [(ngModel)]="form.password" name="password" required autocomplete="new-password" />
+            <button type="button" class="auth-input-suffix"
+              (click)="showPassword.update(v => !v)">
+              <i class="bi" [class.bi-eye]="!showPassword()" [class.bi-eye-slash]="showPassword()"></i>
+            </button>
+          </div>
+        </div>
+
+        <!-- Confirm Password -->
+        <div>
+          <label class="form-label">Confirm Password</label>
+          <div class="auth-input-group"
+            [class.input-state--error]="passwordsMismatch"
+            [class.input-state--ok]="passwordsMatch">
+            <span class="auth-input-prefix"><i class="bi bi-lock-fill"></i></span>
+            <input [type]="showConfirm() ? 'text' : 'password'"
+              class="auth-input"
+              placeholder="Re-enter your password"
+              [(ngModel)]="form.confirmPassword" name="confirmPassword"
+              required autocomplete="new-password" />
+            <button type="button" class="auth-input-suffix"
+              (click)="showConfirm.update(v => !v)">
+              <i class="bi" [class.bi-eye]="!showConfirm()" [class.bi-eye-slash]="showConfirm()"></i>
+            </button>
+          </div>
+          @if (passwordsMismatch) {
+            <p class="form-error"><i class="bi bi-x-circle" style="margin-right:0.25rem"></i>Passwords do not match</p>
+          }
+          @if (passwordsMatch) {
+            <p class="form-ok"><i class="bi bi-check-circle" style="margin-right:0.25rem"></i>Passwords match</p>
+          }
+        </div>
+
+        <button type="submit" class="auth-submit-btn" [disabled]="loading()">
+          @if (loading()) {
+            <svg class="animate-spin btn-spinner" fill="none" viewBox="0 0 24 24">
+              <circle class="spinner-track" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+              <path class="spinner-fill" fill="currentColor" d="M4 12a8 8 0 018-8v8z"></path>
+            </svg>
+            Creating account...
+          } @else {
+            <i class="bi bi-person-plus"></i>
+            Create Account
+          }
+        </button>
+      </form>
+
+      <p class="auth-footer-text">
+        Already have an account?
+        <a routerLink="/login" class="auth-footer-link">Sign in</a>
+      </p>
+    </div>
+  </div>
+</div>

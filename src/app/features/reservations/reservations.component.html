@@ -1,0 +1,194 @@
+<div class="animate-fade-in">
+  <!-- Header -->
+  <div class="page-header">
+    <div>
+      <h1 class="page-title">
+        <i class="bi bi-calendar-check-fill" style="color:#4f46e5"></i>
+        {{ auth.isCustomer() ? 'Book Slots' : 'Reservations' }}
+      </h1>
+      <p class="page-subtitle">{{ reservations().length }} total</p>
+    </div>
+    @if (!auth.isStaff()) {
+      <button (click)="openAdd()" class="btn-primary-tw">
+        <i class="bi bi-plus-lg"></i>
+        {{ auth.isCustomer() ? 'Book a Slot' : 'New Reservation' }}
+      </button>
+    }
+  </div>
+
+  <!-- Alerts -->
+  @if (success()) {
+    <div class="alert alert-success animate-fade-in">
+      <i class="bi bi-check-circle-fill"></i> {{ success() }}
+      <button (click)="success.set('')" class="alert-close"><i class="bi bi-x-lg"></i></button>
+    </div>
+  }
+  @if (error()) {
+    <div class="alert alert-error animate-fade-in">
+      <i class="bi bi-exclamation-circle-fill"></i> {{ error() }}
+      <button (click)="error.set('')" class="alert-close"><i class="bi bi-x-lg"></i></button>
+    </div>
+  }
+
+  <!-- Filters -->
+  <div class="filter-bar">
+    <div class="filter-row">
+      <div class="search-field">
+        <i class="bi bi-search search-field-icon"></i>
+        <input class="input-tw" placeholder="Search vehicle number…" [(ngModel)]="searchVehicle" />
+      </div>
+      <select class="input-tw res-filter-sel" [(ngModel)]="filterStatus">
+        <option value="">ALL STATUSES</option>
+        <option value="CONFIRMED">CONFIRMED</option>
+        <option value="CANCELLED">CANCELLED</option>
+        <option value="COMPLETED">COMPLETED</option>
+      </select>
+      <button (click)="filterStatus=''; searchVehicle=''" class="clear-btn">
+        <i class="bi bi-x-circle"></i> Clear
+      </button>
+      <span class="result-count">{{ filtered.length }} result(s)</span>
+    </div>
+  </div>
+
+  <!-- Table -->
+  <div class="table-card">
+    @if (loading()) {
+      <div class="spinner-container">
+        <svg class="animate-spin res-spinner" fill="none" viewBox="0 0 24 24">
+          <circle class="spinner-track" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+          <path class="spinner-fill" fill="currentColor" d="M4 12a8 8 0 018-8v8z"></path>
+        </svg>
+      </div>
+    } @else if (filtered.length === 0) {
+      <div class="empty-state">
+        <i class="bi bi-calendar-x empty-state-icon"></i>
+        <p class="empty-state-title">No reservations found</p>
+      </div>
+    } @else {
+      <div class="table-scroll">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>ID</th>
+              <th>Vehicle</th>
+              @if (auth.hasRole('ADMIN','STAFF')) {
+                <th>User</th>
+              }
+              <th>Slot</th>
+              <th>Type</th>
+              <th>Start Time</th>
+              <th>End Time</th>
+              <th>Status</th>
+              <th class="col-right">Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (r of filtered; track r.id) {
+              <tr>
+                <td class="td-id">{{ r.id }}</td>
+                <td class="td-primary">{{ r.vehicleNumber }}</td>
+                @if (auth.hasRole('ADMIN','STAFF')) {
+                  <td>
+                    <div class="td-primary-sm">{{ r.userName }}</div>
+                    <div class="td-secondary">ID: {{ r.userId }}</div>
+                  </td>
+                }
+                <td>
+                  <span class="slot-chip">{{ r.slotLocation }}-{{ r.slotId }}</span>
+                </td>
+                <td>
+                  @if (r.slotType === '2W') {
+                    <span class="badge-2w">2W</span>
+                  } @else {
+                    <span class="badge-4w">4W</span>
+                  }
+                </td>
+                <td class="td-secondary">{{ r.startTime | date:'dd MMM, HH:mm' }}</td>
+                <td class="td-secondary">{{ r.endTime ? (r.endTime | date:'dd MMM, HH:mm') : '—' }}</td>
+                <td>
+                  @if (r.status === 'CONFIRMED') { <span class="badge-confirmed">Confirmed</span> }
+                  @else if (r.status === 'CANCELLED') { <span class="badge-cancelled">Cancelled</span> }
+                  @else if (r.status === 'COMPLETED') { <span class="badge-completed">Completed</span> }
+                  @else { <span class="badge-inactive">{{ r.status }}</span> }
+                </td>
+                <td class="td-actions">
+                  @if (r.status === 'CONFIRMED') {
+                    <button (click)="openEdit(r)" class="action-btn-edit"><i class="bi bi-pencil"></i></button>
+                    <button (click)="cancel(r)"   class="action-btn-cancel"><i class="bi bi-x-lg"></i></button>
+                  } @else {
+                    <span class="td-secondary">—</span>
+                  }
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    }
+  </div>
+</div>
+
+<!-- Reservation Modal -->
+@if (showModal()) {
+  <div class="modal-overlay" (click)="showModal.set(false)"></div>
+  <div class="modal-wrapper">
+    <div class="modal-box animate-scale-in">
+      <div class="modal-header">
+        <h3>{{ editMode() ? 'Edit Reservation' : 'New Reservation' }}</h3>
+        <button (click)="showModal.set(false)" class="modal-close-btn"><i class="bi bi-x-lg"></i></button>
+      </div>
+      <div class="modal-body">
+        @if (error()) {
+          <div class="form-error-box">{{ error() }}</div>
+        }
+        <div>
+          <label class="form-label">Vehicle Number <span class="required">*</span></label>
+          <input class="input-tw res-vehicle-input" [(ngModel)]="form.vehicleNumber"
+            placeholder="e.g. TN01AB1234" maxlength="10"
+            (input)="form.vehicleNumber = form.vehicleNumber.toUpperCase()" />
+          <p class="form-hint">Format: TN01AB1234</p>
+        </div>
+        @if (!editMode()) {
+          <div class="form-cols-2">
+            <div>
+              <label class="form-label">Slot Type <span class="required">*</span></label>
+              <select class="input-tw" [(ngModel)]="form.slotType" (change)="onTypeChange()">
+                <option value="2W">2-Wheeler</option>
+                <option value="4W">4-Wheeler</option>
+              </select>
+            </div>
+            <div>
+              <label class="form-label">Available Slot <span class="required">*</span></label>
+              <select class="input-tw" [(ngModel)]="form.slotId">
+                <option [value]="0" disabled>Select slot</option>
+                @for (slot of availableSlots(); track slot.id) {
+                  <option [value]="slot.id">{{ slot.location }}-{{ slot.id }} ({{ slot.type }})</option>
+                }
+              </select>
+            </div>
+          </div>
+        }
+        <div>
+          <label class="form-label">Start Time <span class="required">*</span></label>
+          <input class="input-tw" type="datetime-local" [(ngModel)]="form.startTime" />
+        </div>
+        <div>
+          <label class="form-label">End Time <span class="optional">(optional)</span></label>
+          <input class="input-tw" type="datetime-local" [(ngModel)]="form.endTime" />
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button (click)="showModal.set(false)" class="btn-secondary-tw">Cancel</button>
+        <button (click)="save()" [disabled]="saving()" class="btn-primary-tw">
+          @if (saving()) {
+            <svg class="animate-spin btn-spinner" fill="none" viewBox="0 0 24 24">
+              <circle class="spinner-track" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+              <path class="spinner-fill" fill="currentColor" d="M4 12a8 8 0 018-8v8z"></path>
+            </svg>
+          }
+          {{ editMode() ? 'Update' : 'Create' }}
+        </button>
+      </div>
+    </div>
+  </div>
+}

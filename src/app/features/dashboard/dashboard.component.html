@@ -1,0 +1,198 @@
+<div class="animate-fade-in">
+  <!-- Header -->
+  <div class="page-header">
+    <div>
+      <h1 class="page-title">Dashboard</h1>
+      <p class="page-subtitle">Welcome back, <strong>{{ auth.getEmail() }}</strong></p>
+    </div>
+    <button (click)="loadData()" class="dash-refresh-btn">
+      <i class="bi bi-arrow-clockwise"></i>
+      Refresh
+    </button>
+  </div>
+
+  @if (loading()) {
+    <div class="spinner-container">
+      <svg class="animate-spin dash-spinner" fill="none" viewBox="0 0 24 24">
+        <circle class="spinner-track" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+        <path class="spinner-fill" fill="currentColor" d="M4 12a8 8 0 018-8v8z"></path>
+      </svg>
+      <p>Loading dashboard...</p>
+    </div>
+  } @else {
+
+    <!-- Stat Cards -->
+    <div class="stats-grid animate-slide-up">
+      <div class="card-tw stat-card delay-75">
+        <div class="stat-card-row">
+          <div class="stat-card-info">
+            <p class="stat-label">Total Slots</p>
+            <p class="stat-value">{{ stats().totalSlots }}</p>
+            <p class="stat-sub stat-sub--emerald">
+              <i class="bi bi-circle-fill" style="font-size:6px"></i>
+              {{ stats().availableSlots }} available
+            </p>
+          </div>
+          <div class="stat-icon stat-icon--indigo">
+            <i class="bi bi-grid-3x3-gap-fill"></i>
+          </div>
+        </div>
+      </div>
+
+      <div class="card-tw stat-card delay-100">
+        <div class="stat-card-row">
+          <div class="stat-card-info">
+            <p class="stat-label">Active Reservations</p>
+            <p class="stat-value">{{ stats().activeReservations }}</p>
+            <p class="stat-sub">{{ stats().totalReservations }} total</p>
+          </div>
+          <div class="stat-icon stat-icon--emerald">
+            <i class="bi bi-calendar-check-fill"></i>
+          </div>
+        </div>
+      </div>
+
+      <div class="card-tw stat-card delay-150">
+        <div class="stat-card-row">
+          <div class="stat-card-info">
+            <p class="stat-label">Currently Parked</p>
+            <p class="stat-value">{{ stats().activeLogs }}</p>
+            <p class="stat-sub">{{ stats().occupiedSlots }} slots occupied</p>
+          </div>
+          <div class="stat-icon stat-icon--amber">
+            <i class="bi bi-car-front-fill"></i>
+          </div>
+        </div>
+      </div>
+
+      @if (auth.hasRole('ADMIN', 'STAFF')) {
+        <div class="card-tw stat-card delay-200">
+          <div class="stat-card-row">
+            <div class="stat-card-info">
+              <p class="stat-label">Pending Invoices</p>
+              <p class="stat-value">{{ stats().pendingInvoices }}</p>
+              <p class="stat-sub">{{ stats().totalInvoices }} total</p>
+            </div>
+            <div class="stat-icon stat-icon--red">
+              <i class="bi bi-receipt-cutoff"></i>
+            </div>
+          </div>
+        </div>
+      }
+    </div>
+
+    <!-- Occupancy Bar -->
+    @if (stats().totalSlots > 0) {
+      <div class="card-tw occupancy-card animate-slide-up delay-200">
+        <h2 class="occupancy-title">Slot Occupancy Overview</h2>
+        <div class="occupancy-bar">
+          <div class="occupancy-segment seg-available"
+            [style.width.%]="(stats().availableSlots / stats().totalSlots) * 100"></div>
+          <div class="occupancy-segment seg-reserved"
+            [style.width.%]="(stats().reservedSlots / stats().totalSlots) * 100"></div>
+          <div class="occupancy-segment seg-occupied"
+            [style.width.%]="(stats().occupiedSlots / stats().totalSlots) * 100"></div>
+        </div>
+        <div class="occupancy-legend">
+          <span class="legend-item">
+            <span class="legend-dot dot-available"></span>
+            {{ stats().availableSlots }} Available
+          </span>
+          <span class="legend-item">
+            <span class="legend-dot dot-reserved"></span>
+            {{ stats().reservedSlots }} Reserved
+          </span>
+          <span class="legend-item">
+            <span class="legend-dot dot-occupied"></span>
+            {{ stats().occupiedSlots }} Occupied
+          </span>
+        </div>
+      </div>
+    }
+
+    <!-- Tables Row -->
+    <div class="dash-tables-grid">
+      <!-- Recent Reservations -->
+      <div class="card-tw animate-slide-up delay-300">
+        <div class="dash-table-header">
+          <h2 class="dash-table-title">Recent Reservations</h2>
+          <a routerLink="/reservations" class="dash-view-all">View All →</a>
+        </div>
+        @if (recentReservations().length === 0) {
+          <div class="empty-state">
+            <i class="bi bi-calendar-x empty-state-icon"></i>
+            <p class="empty-state-title">No reservations yet</p>
+          </div>
+        } @else {
+          <div class="table-scroll">
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th>ID</th>
+                  <th>Vehicle</th>
+                  <th>Slot</th>
+                  <th>Status</th>
+                </tr>
+              </thead>
+              <tbody>
+                @for (r of recentReservations(); track r.id) {
+                  <tr>
+                    <td class="td-id">{{ r.id }}</td>
+                    <td class="td-primary">{{ r.vehicleNumber }}</td>
+                    <td class="td-secondary">{{ r.slotLocation }}-{{ r.slotId }}</td>
+                    <td>
+                      @if (r.status === 'CONFIRMED') { <span class="badge-confirmed">Confirmed</span> }
+                      @else if (r.status === 'COMPLETED') { <span class="badge-completed">Completed</span> }
+                      @else if (r.status === 'CANCELLED') { <span class="badge-cancelled">Cancelled</span> }
+                      @else { <span class="badge-inactive">{{ r.status }}</span> }
+                    </td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+          </div>
+        }
+      </div>
+
+      <!-- Active Vehicle Logs (Admin/Staff only) -->
+      @if (auth.hasRole('ADMIN', 'STAFF')) {
+        <div class="card-tw animate-slide-up delay-400">
+          <div class="dash-table-header">
+            <h2 class="dash-table-title">Currently Parked Vehicles</h2>
+            <a routerLink="/vehicle-logs" class="dash-view-all">View All →</a>
+          </div>
+          @if (activeLogs().length === 0) {
+            <div class="empty-state">
+              <i class="bi bi-car-front empty-state-icon"></i>
+              <p class="empty-state-title">No vehicles currently parked</p>
+            </div>
+          } @else {
+            <div class="table-scroll">
+              <table class="data-table">
+                <thead>
+                  <tr>
+                    <th>Vehicle</th>
+                    <th>Slot</th>
+                    <th>Entry Time</th>
+                    <th>Status</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  @for (log of activeLogs(); track log.logId) {
+                    <tr>
+                      <td class="td-primary">{{ log.vehicleNumber }}</td>
+                      <td class="td-secondary">{{ log.slotId }}</td>
+                      <td class="td-secondary">{{ log.entryTime | date:'shortTime' }}</td>
+                      <td><span class="badge-active">Active</span></td>
+                    </tr>
+                  }
+                </tbody>
+              </table>
+            </div>
+          }
+        </div>
+      }
+    </div>
+
+  }
+</div>

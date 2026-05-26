@@ -1,0 +1,163 @@
+<div class="animate-fade-in">
+  <!-- Header -->
+  <div class="page-header">
+    <div>
+      <h1 class="page-title">
+        <i class="bi bi-people-fill" style="color:#4f46e5"></i> User Management
+      </h1>
+      <p class="page-subtitle">{{ users().length }} total users</p>
+    </div>
+    <button (click)="openAdd()" class="btn-primary-tw">
+      <i class="bi bi-person-plus"></i> Add User
+    </button>
+  </div>
+
+  <!-- Alerts -->
+  @if (success()) {
+    <div class="alert alert-success animate-fade-in">
+      <i class="bi bi-check-circle-fill"></i> {{ success() }}
+      <button (click)="success.set('')" class="alert-close"><i class="bi bi-x-lg"></i></button>
+    </div>
+  }
+  @if (error()) {
+    <div class="alert alert-error animate-fade-in">
+      <i class="bi bi-exclamation-circle-fill"></i> {{ error() }}
+      <button (click)="error.set('')" class="alert-close"><i class="bi bi-x-lg"></i></button>
+    </div>
+  }
+
+  <!-- Filters -->
+  <div class="filter-bar">
+    <div class="filter-row">
+      <div class="search-field">
+        <i class="bi bi-search search-field-icon"></i>
+        <input class="input-tw" placeholder="Search name or email…" [(ngModel)]="searchTerm" />
+      </div>
+      <select class="input-tw users-filter-select" [(ngModel)]="filterRole">
+        <option value="">ALL ROLES</option>
+        <option value="ADMIN">ADMIN</option>
+        <option value="STAFF">STAFF</option>
+        <option value="CUSTOMER">CUSTOMER</option>
+      </select>
+      <button (click)="searchTerm=''; filterRole=''" class="clear-btn">
+        <i class="bi bi-x-circle"></i> Clear
+      </button>
+      <span class="result-count">{{ filtered.length }} result(s)</span>
+    </div>
+  </div>
+
+  <!-- Table -->
+  <div class="table-card">
+    @if (loading()) {
+      <div class="spinner-container">
+        <svg class="animate-spin users-spinner" fill="none" viewBox="0 0 24 24">
+          <circle class="spinner-track" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+          <path class="spinner-fill" fill="currentColor" d="M4 12a8 8 0 018-8v8z"></path>
+        </svg>
+      </div>
+    } @else if (filtered.length === 0) {
+      <div class="empty-state">
+        <i class="bi bi-people empty-state-icon"></i>
+        <p class="empty-state-title">No users found</p>
+      </div>
+    } @else {
+      <div class="table-scroll">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>ID</th>
+              <th>Name</th>
+              <th>Email</th>
+              <th>Phone</th>
+              <th>Role</th>
+              <th>Joined</th>
+              <th class="col-right">Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (u of filtered; track u.id) {
+              <tr>
+                <td class="td-id">{{ u.id }}</td>
+                <td class="td-primary">{{ u.name }}</td>
+                <td class="td-secondary">{{ u.email }}</td>
+                <td class="td-secondary">{{ u.phoneNumber }}</td>
+                <td>
+                  @if (u.role === 'ADMIN') { <span class="badge-admin">Admin</span> }
+                  @else if (u.role === 'STAFF') { <span class="badge-staff">Staff</span> }
+                  @else { <span class="badge-customer">Customer</span> }
+                </td>
+                <td class="td-secondary">{{ u.createdAt | date:'dd MMM yyyy' }}</td>
+                <td class="td-actions">
+                  <button (click)="openEdit(u)" class="action-btn-edit">
+                    <i class="bi bi-pencil"></i>
+                  </button>
+                  <button (click)="delete(u)" class="action-btn-delete">
+                    <i class="bi bi-trash"></i>
+                  </button>
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    }
+  </div>
+</div>
+
+<!-- User Modal -->
+@if (showModal()) {
+  <div class="modal-overlay" (click)="showModal.set(false)"></div>
+  <div class="modal-wrapper">
+    <div class="modal-box animate-scale-in">
+      <div class="modal-header">
+        <h3>{{ editMode() ? 'Edit User' : 'Add New User' }}</h3>
+        <button (click)="showModal.set(false)" class="modal-close-btn"><i class="bi bi-x-lg"></i></button>
+      </div>
+      <div class="modal-body">
+        @if (error()) {
+          <div class="form-error-box">{{ error() }}</div>
+        }
+        <div class="form-cols-2">
+          <div class="form-col-full">
+            <label class="form-label">Full Name</label>
+            <input class="input-tw" [(ngModel)]="form.name" placeholder="Full name" />
+          </div>
+          <div class="form-col-full">
+            <label class="form-label">Email</label>
+            <input class="input-tw" type="email" [(ngModel)]="form.email" placeholder="email@example.com" [disabled]="editMode()" />
+          </div>
+          <div>
+            <label class="form-label">Phone</label>
+            <input class="input-tw" [(ngModel)]="form.phoneNumber" placeholder="10-digit number" maxlength="10" />
+          </div>
+          <div>
+            <label class="form-label">Role</label>
+            <select class="input-tw" [(ngModel)]="form.role">
+              <option value="CUSTOMER">Customer</option>
+              <option value="STAFF">Staff</option>
+              <option value="ADMIN">Admin</option>
+            </select>
+          </div>
+          <div class="form-col-full">
+            <label class="form-label">
+              Password <span class="optional">{{ editMode() ? '(leave blank to keep current)' : '' }}</span>
+            </label>
+            <input class="input-tw" type="password" [(ngModel)]="form.password" placeholder="Password" autocomplete="new-password" />
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button (click)="showModal.set(false)" class="btn-secondary-tw">Cancel</button>
+        <button (click)="save()" [disabled]="saving()" class="btn-primary-tw">
+          @if (saving()) {
+            <svg class="animate-spin btn-spinner" fill="none" viewBox="0 0 24 24">
+              <circle class="spinner-track" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+              <path class="spinner-fill" fill="currentColor" d="M4 12a8 8 0 018-8v8z"></path>
+            </svg>
+          }
+          {{ editMode() ? 'Update' : 'Create User' }}
+        </button>
+      </div>
+    </div>
+  </div>
+}

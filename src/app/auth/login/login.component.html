@@ -1,0 +1,123 @@
+<div class="auth-page">
+  <div class="auth-card animate-scale-in">
+    <!-- Left brand panel -->
+    <div class="auth-brand gradient-primary">
+      <div class="auth-brand-icon shadow-glow">
+        <i class="bi bi-p-circle-fill"></i>
+      </div>
+      <h2 class="auth-brand-title">Vehicle Parking Management</h2>
+      <p class="auth-brand-sub">Smart parking solutions for modern spaces</p>
+      <div class="auth-brand-stats">
+        <div class="auth-brand-stat animate-slide-up delay-100">
+          <div class="brand-stat-num">500+</div>
+          <div class="brand-stat-lbl">Slots</div>
+        </div>
+        <div class="brand-stat-divider"></div>
+        <div class="auth-brand-stat animate-slide-up delay-200">
+          <div class="brand-stat-num">24/7</div>
+          <div class="brand-stat-lbl">Support</div>
+        </div>
+        <div class="brand-stat-divider"></div>
+        <div class="auth-brand-stat animate-slide-up delay-300">
+          <div class="brand-stat-num">100%</div>
+          <div class="brand-stat-lbl">Secure</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Right form panel -->
+    <div class="auth-form-panel">
+      <!-- Mobile logo -->
+      <div class="auth-mobile-logo">
+        <i class="bi bi-p-circle-fill auth-mobile-icon"></i>
+        <span class="auth-mobile-brand">VPMS</span>
+      </div>
+
+      <h3 class="auth-form-title">Welcome back</h3>
+      <p class="auth-form-sub">Sign in to your account</p>
+
+      @if (registered()) {
+        <div class="alert alert-success animate-fade-in">
+          <i class="bi bi-check-circle-fill"></i>
+          <span>Account created! You can now sign in.</span>
+        </div>
+      }
+      @if (error()) {
+        <div class="alert alert-error animate-fade-in">
+          <i class="bi bi-exclamation-circle-fill"></i>
+          <span>{{ error() }}</span>
+        </div>
+      }
+
+      <form (ngSubmit)="login()" class="auth-form">
+        <div>
+          <label class="form-label">Email Address</label>
+          <div class="auth-input-group">
+            <span class="auth-input-prefix"><i class="bi bi-envelope"></i></span>
+            <input
+              type="email"
+              class="auth-input"
+              placeholder="you@example.com"
+              [(ngModel)]="email"
+              name="email"
+              required
+              autocomplete="email"
+            />
+          </div>
+        </div>
+
+        <div>
+          <label class="form-label">Password</label>
+          <div class="auth-input-group">
+            <span class="auth-input-prefix"><i class="bi bi-lock"></i></span>
+            <input
+              [type]="showPassword() ? 'text' : 'password'"
+              class="auth-input"
+              placeholder="Enter your password"
+              [(ngModel)]="password"
+              name="password"
+              required
+              autocomplete="current-password"
+            />
+            <button
+              type="button"
+              class="auth-input-suffix"
+              (click)="showPassword.update((v) => !v)"
+            >
+              <i
+                class="bi"
+                [class.bi-eye]="!showPassword()"
+                [class.bi-eye-slash]="showPassword()"
+              ></i>
+            </button>
+          </div>
+        </div>
+
+        <button type="submit" class="auth-submit-btn" [disabled]="loading()">
+          @if (loading()) {
+            <svg class="animate-spin btn-spinner" fill="none" viewBox="0 0 24 24">
+              <circle
+                class="spinner-track"
+                cx="12"
+                cy="12"
+                r="10"
+                stroke="currentColor"
+                stroke-width="4"
+              ></circle>
+              <path class="spinner-fill" fill="currentColor" d="M4 12a8 8 0 018-8v8z"></path>
+            </svg>
+            Signing in...
+          } @else {
+            <i class="bi bi-box-arrow-in-right"></i>
+            Sign In
+          }
+        </button>
+      </form>
+
+      <p class="auth-footer-text">
+        Don't have an account?
+        <a routerLink="/register" class="auth-footer-link">Create account</a>
+      </p>
+    </div>
+  </div>
+</div>
