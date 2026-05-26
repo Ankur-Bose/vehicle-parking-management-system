@@ -1,3 +1,16 @@
 node_modules/
 .angular/
 dist/
+
+# Java / Spring Boot
+target/
+*.class
+*.jar
+*.war
+*.ear
+.idea/
+*.iml
+.classpath
+.project
+.settings/
+logs/
